@@ -1,5 +1,5 @@
 {
-  "name": "md-to-adf",
+  "name": "md-to-adf-dailykos",
   "version": "0.0.0-semantically-released",
   "description": "Translate Markdown (Github) into Atlassian Document Format (ADF)",
   "main": "dist/index.js",
