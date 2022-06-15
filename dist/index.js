@@ -1760,7 +1760,7 @@ function matchHeader( lineToMatch ){
  * @returns {IRElement} | null if the expression doesn't match
  */
 function matchList( lineToMatch ){
-	const list = lineToMatch.match( /^(?:[\s])*(?:[*\-+] |(?<orderedNumber>[0-9]+)[.)] )+(?<listText>.*)$/i )
+  const list = lineToMatch.match( /^(?<witespace>\s*)(?:[*\-+] |(?<orderedNumber>[0-9]+)[.)] )+(?<listText>.*)$/i )
 	if( list
 		&& list.groups
 		&& list.groups.listText ){
@@ -1775,7 +1775,7 @@ function matchList( lineToMatch ){
 										: "bulletList",
 			typeParam:		list.groups.orderedNumber,
 			textToEmphasis: textIsCodeBlock ? '': list.groups.listText,
-			textPosition: 	lineToMatch.indexOf( list.groups.listText ) - 2,
+			textPosition: 	list.groups.witespace.length,
 			nodeAttached: 	textIsCodeBlock
 		}
 	}
