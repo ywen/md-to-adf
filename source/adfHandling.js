@@ -9,7 +9,7 @@
  * It also remove non-compatible hierarchy that ADF doesn't support
  *
  **********************************************************************************************************************/
-const { marks, Heading, Text, Emoji, BulletList, OrderedList, ListItem, CodeBlock, BlockQuote, Paragraph, Rule }	= require( 'adf-builder' )
+const { marks, Heading, Text, Emoji, BulletList, OrderedList, ListItem, CodeBlock, BlockQuote, Paragraph, Rule, Mention }	= require( 'adf-builder' )
 
 const attachTextToNodeSliceEmphasis = require( __dirname + '/adfEmphasisParsing' )
 
@@ -156,6 +156,11 @@ function attachItemNode( nodeToAttachTo, rawText ) {
 				nodeToAttachTo.content.add( linkNode )
 				break
 			
+			case 'mention':
+				const mentionNode = new Mention( currentSlice.optionalText1, currentSlice.text)
+				nodeToAttachTo.content.add( mentionNode )
+				break
+			
 			case 'image':
 				const imageNode = new Text( currentSlice.text,
 											marks().link( currentSlice.optionalText1,
@@ -201,7 +206,15 @@ function sliceEmoji( rawText ){
  * @returns 					{String[]}	the different slice matching a link style
  */
 function sliceLink( rawText ){
-	return sliceOneMatchFromRegexp( rawText, 'link',/(?<nonMatchBefore>[^`]*)(?:\[(?<match>[^\[\]]+)\]\((?<matchOptional>[^\(\)"]+)(?: "(?<matchOptional2>[^"]*)")?\))(?<nonMatchAfter>[^`]*)/g )
+  const result = sliceOneMatchFromRegexp( rawText, 'link',/(?<nonMatchBefore>[^`]*)(?:\[(?<match>[^\[\]]+)\]\((?<matchOptional>[^\(\)"]+)(?: "(?<matchOptional2>[^"]*)")?\))(?<nonMatchAfter>[^`]*)/g )
+  result.forEach(matched => {
+    if(matched.isMatching) {
+      if(matched.text.startsWith("@")) {
+        matched.type = "mention";
+      }
+    }
+  })
+  return result;
 }
 
 /**
@@ -214,35 +227,35 @@ function sliceLink( rawText ){
  * @returns 					{String[]}	the different slice matching the specified regexp
  */
 function sliceOneMatchFromRegexp( rawText, typeTag, regexpToSliceWith ){
-	let slicesResult = [ ]
-	let snippet = null
-	let hasAtLeastOneExpression = false
-	
-	while( ( snippet = regexpToSliceWith.exec( rawText ) ) ) {
-		hasAtLeastOneExpression = true
-		if( snippet.groups.nonMatchBefore ){
-			slicesResult.push( { isMatching: false, text: snippet.groups.nonMatchBefore } )
-		}
-		
-		if( snippet.groups.match ){
-			slicesResult.push( {
-								   isMatching: 		true,
-								   type: 			typeTag,
-								   text: 			snippet.groups.match,
-								   optionalText1: 	snippet.groups.matchOptional,
-								   optionalText2: 	snippet.groups.matchOptional2
-							   } )
-		}
-		
-		if( snippet.groups.nonMatchAfter ){
-			slicesResult.push( { isMatching: false, text: snippet.groups.nonMatchAfter } )
-		}
-	}
-	
-	if( !hasAtLeastOneExpression )
-		slicesResult.push( { isMatching: false, text: rawText } )
-	
-	return slicesResult
+  let slicesResult = [ ]
+  let snippet = null
+  let hasAtLeastOneExpression = false
+
+  while( ( snippet = regexpToSliceWith.exec( rawText ) ) ) {
+    hasAtLeastOneExpression = true
+    if( snippet.groups.nonMatchBefore ){
+      slicesResult.push( { isMatching: false, text: snippet.groups.nonMatchBefore } )
+    }
+
+    if( snippet.groups.match ){
+      slicesResult.push( {
+        isMatching: 		true,
+        type: 			typeTag,
+        text: 			snippet.groups.match,
+        optionalText1: 	snippet.groups.matchOptional,
+        optionalText2: 	snippet.groups.matchOptional2
+      } )
+    }
+
+    if( snippet.groups.nonMatchAfter ){
+      slicesResult.push( { isMatching: false, text: snippet.groups.nonMatchAfter } )
+    }
+  }
+
+  if( !hasAtLeastOneExpression )
+    slicesResult.push( { isMatching: false, text: rawText } )
+
+  return slicesResult
 }
 
 /**
@@ -252,8 +265,8 @@ function sliceOneMatchFromRegexp( rawText, typeTag, regexpToSliceWith ){
  * @param textToAttach		{String}	text to use for the Text node
  */
 function attachTextToNodeRaw( nodeToAttachTo, textToAttach ){
-	const textNode = new Text( textToAttach )
-	nodeToAttachTo.content.add( textNode )
+  const textNode = new Text( textToAttach )
+  nodeToAttachTo.content.add( textNode )
 }
 
 module.exports = fillADFNodesWithMarkdown
