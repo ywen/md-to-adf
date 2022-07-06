@@ -206,15 +206,27 @@ function sliceEmoji( rawText ){
  * @returns 					{String[]}	the different slice matching a link style
  */
 function sliceLink( rawText ){
-  const result = sliceOneMatchFromRegexp( rawText, 'link',/(?<nonMatchBefore>[^`]*)(?:\[(?<match>[^\[\]]+)\]\((?<matchOptional>[^\(\)"]+)(?: "(?<matchOptional2>[^"]*)")?\))(?<nonMatchAfter>[^`]*)/g )
-  result.forEach(matched => {
-    if(matched.isMatching) {
-      if(matched.text.startsWith("@")) {
-        matched.type = "mention";
+  const regex = /(\[.*?\]\(.*?\))/;
+  const splitted = rawText.split(regex);
+  return splitted.map(str => {
+    if (regex.test(str)) {
+      const typeTag = str[1] === "@" ? "mention" : "link";
+      const catchText = str.match(/\[(.*?)\]\((.*?)\)/);
+      const optionalText = catchText[2].match(/(\S+)( "(.*)")?/);
+      return {
+        isMatching: true,
+        type: typeTag,
+        text: catchText[1],
+        optionalText1: optionalText[1],
+        optionalText2: optionalText[3],
+      }
+    } else {
+      return {
+        isMatching: false,
+        text: str,
       }
     }
-  })
-  return result;
+  });
 }
 
 /**
